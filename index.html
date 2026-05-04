@@ -34,8 +34,9 @@
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    /* Prevent any horizontal overflow / sideways shift site-wide */
-    html, body { overflow-x: hidden; }
+    /* overflow-x only on html (not body) — body overflow:hidden breaks
+       touch events on position:fixed overlays in iOS Safari */
+    html { overflow-x: hidden; }
     /* iOS: remove grey tap flash on buttons/cards */
     a, button, [onclick] { -webkit-tap-highlight-color: transparent; }
     /* iOS: smooth momentum scrolling in modals */
