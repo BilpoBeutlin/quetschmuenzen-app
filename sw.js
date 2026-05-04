@@ -1,4 +1,4 @@
-const CACHE = 'quetschmuenzen-v4';
+const CACHE = 'quetschmuenzen-v5';
 const LOCAL = ['./index.html', './manifest.json', './icon.svg', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
