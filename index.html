@@ -14,7 +14,10 @@
   <link rel="apple-touch-icon" href="icon.svg">
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <style>
     :root {
       --copper:      #b5651d;
@@ -466,6 +469,36 @@
     .confirm-modal h3 { font-size: 1.1rem; margin-bottom: 6px; }
     .confirm-modal p { font-size: 0.88rem; color: var(--text-light); }
 
+    /* ── Marker cluster – copper theme ── */
+    .marker-cluster-small, .marker-cluster-medium, .marker-cluster-large {
+      background-color: rgba(139,69,19,0.22) !important;
+    }
+    .marker-cluster-small div, .marker-cluster-medium div, .marker-cluster-large div {
+      background: radial-gradient(circle at 38% 38%, #d4845a, #8b4513) !important;
+      color: #f0d080 !important; font-weight: 800 !important;
+    }
+
+    /* ── Backup reminder toast ── */
+    .backup-toast {
+      position: fixed; bottom: calc(20px + env(safe-area-inset-bottom)); left: 50%;
+      transform: translateX(-50%);
+      background: var(--warm-white); border: 1px solid var(--border);
+      border-left: 4px solid var(--copper);
+      border-radius: 12px; padding: 12px 16px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.15);
+      display: flex; align-items: center; gap: 12px;
+      font-size: 0.85rem; color: var(--text);
+      z-index: 800; max-width: calc(100vw - 40px);
+      animation: slideUp 0.25s ease;
+    }
+    .backup-toast-close {
+      background: none; border: none; font-size: 1rem;
+      cursor: pointer; color: var(--text-light); flex-shrink: 0;
+    }
+    .backup-toast a {
+      color: var(--copper); font-weight: 700; cursor: pointer; text-decoration: none;
+    }
+
     /* Scrollbar */
     ::-webkit-scrollbar { width: 8px; }
     ::-webkit-scrollbar-track { background: var(--cream); }
@@ -806,6 +839,7 @@
   let currentPhotoData2 = null;
   let currentView     = 'gallery';
   let leafletMap      = null;
+  let markerCluster   = null;
   let mapMarkers      = [];
 
   // ── Utils ────────────────────────────────────────────────
@@ -851,9 +885,9 @@
     ['gallery','map','stats'].forEach(n => {
       document.getElementById('btn' + n.charAt(0).toUpperCase() + n.slice(1)).classList.toggle('active', n===v);
     });
-    document.getElementById('galleryView').style.display = v==='gallery' ? '' : 'none';
-    document.getElementById('mapView').style.display     = v==='map'     ? '' : 'none';
-    document.getElementById('statsView').style.display   = v==='stats'   ? '' : 'none';
+    document.getElementById('galleryView').style.display = v==='gallery' ? 'block' : 'none';
+    document.getElementById('mapView').style.display     = v==='map'     ? 'block' : 'none';
+    document.getElementById('statsView').style.display   = v==='stats'   ? 'block' : 'none';
     if (v==='map')   { initMap(); renderMap(); }
     if (v==='stats') renderStats();
   }
@@ -1058,6 +1092,20 @@
       attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
       maxZoom:19
     }).addTo(leafletMap);
+    markerCluster = L.markerClusterGroup({
+      maxClusterRadius: 60,
+      showCoverageOnHover: false,
+      iconCreateFunction: cluster => {
+        const n = cluster.getChildCount();
+        const s = n > 9 ? 46 : 40;
+        return L.divIcon({
+          className:'',
+          html:`<div style="width:${s}px;height:${s}px;background:radial-gradient(circle at 38% 38%,#d4845a,#8b4513);border:3px solid #f0d080;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#f0d080;font-size:13px;font-weight:800;box-shadow:0 3px 10px rgba(0,0,0,0.35)">${n}</div>`,
+          iconSize:[s,s], iconAnchor:[s/2,s/2]
+        });
+      }
+    });
+    leafletMap.addLayer(markerCluster);
   }
   function makeCoinIcon(count) {
     const s = count>1?44:36;
@@ -1069,7 +1117,7 @@
   }
   function renderMap() {
     if (!leafletMap) return;
-    mapMarkers.forEach(m=>leafletMap.removeLayer(m)); mapMarkers=[];
+    markerCluster.clearLayers(); mapMarkers=[];
     const filtered=getFilteredCoins(), noCoords=[];
     const byLoc={};
     filtered.forEach(c => {
@@ -1089,14 +1137,14 @@
             </div>
           </div>`).join('')}</div>`,
         {maxWidth:280,minWidth:220});
-      m.addTo(leafletMap); mapMarkers.push(m);
+      markerCluster.addLayer(m); mapMarkers.push(m);
     });
     const box=document.getElementById('mapNoCoordsBox');
     if (noCoords.length) {
       box.style.display='block';
       box.innerHTML=`<strong>⚠️ Koordinaten noch nicht gefunden für:</strong> ${[...new Set(noCoords.map(c=>c.location))].map(escHtml).join(', ')} — werden automatisch nachgeladen.`;
     } else box.style.display='none';
-    if (mapMarkers.length) leafletMap.fitBounds(L.featureGroup(mapMarkers).getBounds().pad(0.3),{maxZoom:10});
+    if (mapMarkers.length) leafletMap.fitBounds(markerCluster.getBounds().pad(0.3),{maxZoom:10});
   }
   function closeAllPopups() { mapMarkers.forEach(m=>m.closePopup()); }
 
@@ -1214,6 +1262,7 @@
     coins=await dbGetAll();
     renderGallery(); updateLocationFilter();
     geocodeMissingCoins();
+    checkBackupReminder();
     // Close dropdown when clicking outside
     document.addEventListener('click', e=>{
       if (!e.target.closest('.header-menu')) closeMenu();
@@ -1230,12 +1279,31 @@
   function closeMenu()  { document.getElementById('dropdownMenu').classList.remove('open'); }
 
   // ── Export / Import ──────────────────────────────────────
+  const BACKUP_DATE_KEY = 'quetschmuenzen_last_backup';
   function exportData() {
     const json=JSON.stringify({version:2, exportDate:new Date().toISOString(), coins}, null, 2);
     const a=document.createElement('a');
     a.href=URL.createObjectURL(new Blob([json],{type:'application/json'}));
     a.download=`quetschmuenzen-backup-${new Date().toISOString().slice(0,10)}.json`;
     a.click();
+    localStorage.setItem(BACKUP_DATE_KEY, Date.now().toString());
+    dismissBackupToast();
+  }
+  function dismissBackupToast() {
+    const t=document.getElementById('backupToast');
+    if (t) t.remove();
+  }
+  function checkBackupReminder() {
+    if (coins.length === 0) return;
+    const last = parseInt(localStorage.getItem(BACKUP_DATE_KEY)||'0', 10);
+    const daysSince = (Date.now() - last) / 86400000;
+    if (daysSince < 30) return;
+    const toast = document.createElement('div');
+    toast.id = 'backupToast';
+    toast.className = 'backup-toast';
+    const msg = last === 0 ? 'Noch kein Backup erstellt.' : `Letztes Backup vor ${Math.floor(daysSince)} Tagen.`;
+    toast.innerHTML = `<span>💾 ${msg} <a onclick="exportData();closeMenu()">Jetzt sichern</a></span><button class="backup-toast-close" onclick="dismissBackupToast();localStorage.setItem('${BACKUP_DATE_KEY}',Date.now())">✕</button>`;
+    document.body.appendChild(toast);
   }
   function triggerImport() { document.getElementById('importInput').click(); }
   async function handleImport(e) {
