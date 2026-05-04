@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Quetschmünzen Sammlung</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
     :root {
       --copper:      #b5651d;
@@ -38,7 +40,7 @@
       box-shadow: 0 3px 12px rgba(0,0,0,0.25);
       position: sticky;
       top: 0;
-      z-index: 100;
+      z-index: 400;
     }
     .header-inner {
       max-width: 1100px;
@@ -49,32 +51,16 @@
       gap: 16px;
       flex-wrap: wrap;
     }
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
+    .logo { display: flex; align-items: center; gap: 12px; }
     .logo-icon {
-      width: 44px;
-      height: 44px;
+      width: 44px; height: 44px;
       background: rgba(255,255,255,0.2);
       border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; flex-shrink: 0;
     }
-    header h1 {
-      font-size: 1.5rem;
-      font-weight: 700;
-      letter-spacing: 0.3px;
-    }
-    header p.subtitle {
-      font-size: 0.8rem;
-      opacity: 0.8;
-      margin-top: 1px;
-    }
+    header h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: 0.3px; }
+    header p.subtitle { font-size: 0.8rem; opacity: 0.8; margin-top: 1px; }
     .btn-add-header {
       background: rgba(255,255,255,0.2);
       border: 2px solid rgba(255,255,255,0.5);
@@ -82,55 +68,58 @@
       padding: 9px 20px;
       border-radius: 50px;
       cursor: pointer;
-      font-size: 0.95rem;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 7px;
+      font-size: 0.95rem; font-weight: 600;
+      display: flex; align-items: center; gap: 7px;
       transition: background var(--transition), transform var(--transition);
       white-space: nowrap;
     }
-    .btn-add-header:hover {
-      background: rgba(255,255,255,0.33);
-      transform: translateY(-1px);
-    }
+    .btn-add-header:hover { background: rgba(255,255,255,0.33); transform: translateY(-1px); }
 
     /* ── Main ── */
-    main {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 28px 20px 60px;
-    }
+    main { max-width: 1100px; margin: 0 auto; padding: 28px 20px 60px; }
 
     /* ── Toolbar ── */
     .toolbar {
-      display: flex;
-      gap: 12px;
+      display: flex; gap: 12px;
       margin-bottom: 28px;
-      flex-wrap: wrap;
-      align-items: center;
+      flex-wrap: wrap; align-items: center;
     }
+    .view-toggle {
+      display: flex;
+      background: var(--border);
+      border-radius: 50px;
+      padding: 3px;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+    .view-btn {
+      padding: 7px 18px;
+      border: none; border-radius: 50px;
+      font-size: 0.88rem; font-weight: 600;
+      cursor: pointer;
+      display: flex; align-items: center; gap: 6px;
+      transition: background var(--transition), color var(--transition), box-shadow var(--transition);
+      background: transparent; color: var(--text-light);
+    }
+    .view-btn.active {
+      background: var(--warm-white);
+      color: var(--copper-dark);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+    }
+
     .search-wrap {
-      position: relative;
-      flex: 1;
-      min-width: 200px;
+      position: relative; flex: 1; min-width: 200px;
     }
     .search-wrap svg {
-      position: absolute;
-      left: 13px;
-      top: 50%;
+      position: absolute; left: 13px; top: 50%;
       transform: translateY(-50%);
-      color: var(--text-light);
-      pointer-events: none;
+      color: var(--text-light); pointer-events: none;
     }
     .search-input {
       width: 100%;
       padding: 11px 14px 11px 40px;
-      border: 2px solid var(--border);
-      border-radius: 50px;
-      font-size: 0.95rem;
-      background: var(--warm-white);
-      color: var(--text);
+      border: 2px solid var(--border); border-radius: 50px;
+      font-size: 0.95rem; background: var(--warm-white); color: var(--text);
       transition: border-color var(--transition), box-shadow var(--transition);
       outline: none;
     }
@@ -140,53 +129,30 @@
     }
     select.filter-select {
       padding: 11px 16px;
-      border: 2px solid var(--border);
-      border-radius: 50px;
-      font-size: 0.9rem;
-      background: var(--warm-white);
-      color: var(--text);
-      cursor: pointer;
-      outline: none;
+      border: 2px solid var(--border); border-radius: 50px;
+      font-size: 0.9rem; background: var(--warm-white); color: var(--text);
+      cursor: pointer; outline: none;
       transition: border-color var(--transition);
       min-width: 160px;
     }
     select.filter-select:focus { border-color: var(--copper); }
-
-    .count-badge {
-      color: var(--text-light);
-      font-size: 0.88rem;
-      white-space: nowrap;
-      padding: 0 4px;
-    }
+    .count-badge { color: var(--text-light); font-size: 0.88rem; white-space: nowrap; padding: 0 4px; }
 
     /* ── Empty state ── */
-    .empty-state {
-      text-align: center;
-      padding: 80px 20px;
-      color: var(--text-light);
-    }
+    .empty-state { text-align: center; padding: 80px 20px; color: var(--text-light); }
     .empty-state .empty-icon { font-size: 4rem; margin-bottom: 16px; }
     .empty-state h2 { font-size: 1.3rem; margin-bottom: 8px; color: var(--text); }
     .empty-state p { font-size: 0.95rem; margin-bottom: 24px; }
     .btn-primary {
       background: linear-gradient(135deg, var(--copper), var(--copper-dark));
-      color: #fff;
-      border: none;
-      padding: 12px 28px;
-      border-radius: 50px;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
+      color: #fff; border: none;
+      padding: 12px 28px; border-radius: 50px;
+      font-size: 1rem; font-weight: 600; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 8px;
       transition: transform var(--transition), box-shadow var(--transition);
       box-shadow: 0 4px 14px rgba(181,101,29,0.35);
     }
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 18px rgba(181,101,29,0.45);
-    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(181,101,29,0.45); }
 
     /* ── Gallery Grid ── */
     .gallery {
@@ -194,191 +160,170 @@
       grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
       gap: 20px;
     }
-
     .card {
-      background: var(--warm-white);
-      border-radius: var(--radius);
-      box-shadow: 0 2px 10px var(--shadow);
-      overflow: hidden;
+      background: var(--warm-white); border-radius: var(--radius);
+      box-shadow: 0 2px 10px var(--shadow); overflow: hidden;
       cursor: pointer;
       transition: transform var(--transition), box-shadow var(--transition);
-      border: 1px solid var(--border);
-      position: relative;
+      border: 1px solid var(--border); position: relative;
     }
-    .card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 24px rgba(90,50,10,0.18);
-    }
+    .card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(90,50,10,0.18); }
     .card-img {
-      width: 100%;
-      aspect-ratio: 1;
-      object-fit: cover;
+      width: 100%; aspect-ratio: 1; object-fit: cover;
       background: linear-gradient(135deg, #e8d5b7 0%, #d4b896 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 3.5rem;
-      color: var(--copper-light);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 3.5rem; color: var(--copper-light);
     }
-    .card-img img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    .card-body {
-      padding: 14px 16px 16px;
-    }
+    .card-img img { width: 100%; height: 100%; object-fit: cover; }
+    .card-body { padding: 14px 16px 16px; }
     .card-title {
-      font-size: 1rem;
-      font-weight: 700;
-      color: var(--text);
-      margin-bottom: 5px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      font-size: 1rem; font-weight: 700; color: var(--text);
+      margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    .card-meta {
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-    }
+    .card-meta { display: flex; flex-direction: column; gap: 3px; }
     .card-meta-item {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 0.82rem;
-      color: var(--text-light);
+      display: flex; align-items: center; gap: 5px;
+      font-size: 0.82rem; color: var(--text-light);
     }
     .card-meta-item svg { flex-shrink: 0; }
-
     .card-actions {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      display: flex;
-      gap: 5px;
-      opacity: 0;
+      position: absolute; top: 8px; right: 8px;
+      display: flex; gap: 5px; opacity: 0;
       transition: opacity var(--transition);
     }
     .card:hover .card-actions { opacity: 1; }
     .card-btn {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      border: none;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: transform var(--transition);
-      backdrop-filter: blur(4px);
+      width: 32px; height: 32px; border-radius: 50%; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: transform var(--transition); backdrop-filter: blur(4px);
     }
     .card-btn:hover { transform: scale(1.12); }
-    .card-btn-edit {
-      background: rgba(201,168,76,0.9);
-      color: #fff;
+    .card-btn-edit  { background: rgba(201,168,76,0.9);  color: #fff; }
+    .card-btn-delete{ background: rgba(200,60,60,0.85);  color: #fff; }
+
+    /* ── Map view ── */
+    #mapContainer {
+      display: none;
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 4px 20px var(--shadow);
+      border: 1px solid var(--border);
     }
-    .card-btn-delete {
-      background: rgba(200,60,60,0.85);
-      color: #fff;
+    #map { height: 620px; }
+
+    .map-no-coords {
+      background: var(--warm-white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      margin-top: 14px;
+      font-size: 0.88rem;
+      color: var(--text-light);
     }
+    .map-no-coords strong { color: var(--text); }
+
+    /* Leaflet popup customization */
+    .leaflet-popup-content-wrapper {
+      border-radius: 12px !important;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.18) !important;
+      padding: 0 !important;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .leaflet-popup-content { margin: 0 !important; min-width: 200px; max-width: 260px; }
+    .leaflet-popup-tip-container { margin-top: -1px; }
+
+    .popup-header {
+      background: linear-gradient(135deg, var(--copper-dark), var(--copper));
+      color: #fff; padding: 10px 14px;
+      font-weight: 700; font-size: 0.9rem;
+      display: flex; align-items: center; gap: 7px;
+    }
+    .popup-coins { padding: 8px 6px; }
+    .popup-coin-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 6px 8px; border-radius: 8px;
+      cursor: pointer; transition: background var(--transition);
+    }
+    .popup-coin-item:hover { background: var(--cream); }
+    .popup-coin-thumb {
+      width: 40px; height: 40px; border-radius: 7px; object-fit: cover;
+      background: linear-gradient(135deg, #e8d5b7, #d4b896);
+      flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; overflow: hidden;
+    }
+    .popup-coin-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .popup-coin-info { min-width: 0; }
+    .popup-coin-name { font-size: 0.88rem; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .popup-coin-date { font-size: 0.75rem; color: var(--text-light); }
+
+    /* geocode status badge on cards */
+    .geo-badge {
+      position: absolute; bottom: 8px; right: 8px;
+      width: 18px; height: 18px; border-radius: 50%;
+      font-size: 10px; display: flex; align-items: center; justify-content: center;
+      opacity: 0.7;
+    }
+    .geo-badge.ok   { background: #c8f0c0; color: #2a7a1a; }
+    .geo-badge.miss { background: #f5e0c0; color: #8a5010; }
 
     /* ── Modals ── */
     .overlay {
-      position: fixed;
-      inset: 0;
+      position: fixed; inset: 0;
       background: rgba(30,15,5,0.55);
       backdrop-filter: blur(3px);
-      z-index: 200;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      animation: fadeIn 0.18s ease;
+      z-index: 500;
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px; animation: fadeIn 0.18s ease;
     }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     .modal {
-      background: var(--warm-white);
-      border-radius: 20px;
+      background: var(--warm-white); border-radius: 20px;
       box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-      width: 100%;
-      max-width: 540px;
-      max-height: 90vh;
-      overflow-y: auto;
-      animation: slideUp 0.22s ease;
+      width: 100%; max-width: 540px; max-height: 90vh;
+      overflow-y: auto; animation: slideUp 0.22s ease;
     }
     @keyframes slideUp {
       from { transform: translateY(24px); opacity: 0; }
       to   { transform: translateY(0);    opacity: 1; }
     }
     .modal-header {
-      padding: 22px 24px 16px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky;
-      top: 0;
-      background: var(--warm-white);
-      border-radius: 20px 20px 0 0;
-      z-index: 1;
+      padding: 22px 24px 16px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; background: var(--warm-white);
+      border-radius: 20px 20px 0 0; z-index: 1;
     }
     .modal-header h2 { font-size: 1.2rem; color: var(--text); }
     .btn-close {
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      border: none;
-      background: var(--border);
-      color: var(--text);
-      font-size: 1.1rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background var(--transition);
-      flex-shrink: 0;
+      width: 34px; height: 34px; border-radius: 50%; border: none;
+      background: var(--border); color: var(--text); font-size: 1.1rem;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: background var(--transition); flex-shrink: 0;
     }
     .btn-close:hover { background: #cdb898; }
     .modal-body { padding: 22px 24px; }
     .modal-footer {
-      padding: 16px 24px 22px;
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-      border-top: 1px solid var(--border);
+      padding: 16px 24px 22px; display: flex; gap: 10px;
+      justify-content: flex-end; border-top: 1px solid var(--border);
     }
 
     /* ── Form ── */
-    .form-group {
-      margin-bottom: 18px;
-    }
+    .form-group { margin-bottom: 18px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
     label {
-      display: block;
-      font-size: 0.88rem;
-      font-weight: 600;
-      color: var(--text-light);
-      margin-bottom: 6px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+      display: block; font-size: 0.88rem; font-weight: 600;
+      color: var(--text-light); margin-bottom: 6px;
+      text-transform: uppercase; letter-spacing: 0.5px;
     }
-    input[type="text"],
-    input[type="date"],
-    textarea {
-      width: 100%;
-      padding: 11px 14px;
-      border: 2px solid var(--border);
-      border-radius: 10px;
-      font-size: 0.95rem;
-      background: var(--cream);
-      color: var(--text);
+    input[type="text"], input[type="date"], textarea {
+      width: 100%; padding: 11px 14px;
+      border: 2px solid var(--border); border-radius: 10px;
+      font-size: 0.95rem; background: var(--cream); color: var(--text);
       outline: none;
       transition: border-color var(--transition), box-shadow var(--transition);
       font-family: inherit;
     }
-    input[type="text"]:focus,
-    input[type="date"]:focus,
-    textarea:focus {
+    input[type="text"]:focus, input[type="date"]:focus, textarea:focus {
       border-color: var(--copper);
       box-shadow: 0 0 0 3px rgba(181,101,29,0.15);
     }
@@ -386,49 +331,31 @@
 
     /* Photo upload */
     .photo-upload-area {
-      border: 2px dashed var(--border);
-      border-radius: 12px;
-      padding: 24px;
-      text-align: center;
-      cursor: pointer;
+      border: 2px dashed var(--border); border-radius: 12px; padding: 24px;
+      text-align: center; cursor: pointer;
       transition: border-color var(--transition), background var(--transition);
-      background: var(--cream);
-      position: relative;
+      background: var(--cream); position: relative;
     }
     .photo-upload-area:hover, .photo-upload-area.drag-over {
-      border-color: var(--copper);
-      background: rgba(181,101,29,0.05);
+      border-color: var(--copper); background: rgba(181,101,29,0.05);
     }
     .photo-upload-area input[type="file"] {
-      position: absolute;
-      inset: 0;
-      opacity: 0;
-      cursor: pointer;
-      width: 100%;
-      height: 100%;
+      position: absolute; inset: 0; opacity: 0;
+      cursor: pointer; width: 100%; height: 100%;
     }
     .upload-icon { font-size: 2.2rem; margin-bottom: 8px; }
     .upload-text { font-size: 0.9rem; color: var(--text-light); }
     .upload-text strong { color: var(--copper); }
     .photo-preview {
-      width: 100%;
-      max-height: 220px;
-      object-fit: contain;
-      border-radius: 8px;
-      margin-top: 12px;
-      display: none;
+      width: 100%; max-height: 220px; object-fit: contain;
+      border-radius: 8px; margin-top: 12px; display: none;
     }
     .photo-preview.visible { display: block; }
     .photo-remove-btn {
-      display: none;
-      margin-top: 8px;
-      background: none;
-      border: 1px solid #d9534f;
-      color: #d9534f;
-      border-radius: 6px;
-      padding: 4px 12px;
-      font-size: 0.82rem;
-      cursor: pointer;
+      display: none; margin-top: 8px; background: none;
+      border: 1px solid #d9534f; color: #d9534f;
+      border-radius: 6px; padding: 4px 12px;
+      font-size: 0.82rem; cursor: pointer;
       transition: background var(--transition), color var(--transition);
     }
     .photo-remove-btn.visible { display: inline-block; }
@@ -436,26 +363,18 @@
 
     /* Buttons */
     .btn-secondary {
-      background: var(--cream);
-      color: var(--text-light);
-      border: 2px solid var(--border);
-      padding: 10px 22px;
-      border-radius: 50px;
-      font-size: 0.95rem;
-      cursor: pointer;
-      font-weight: 600;
+      background: var(--cream); color: var(--text-light);
+      border: 2px solid var(--border); padding: 10px 22px;
+      border-radius: 50px; font-size: 0.95rem; cursor: pointer; font-weight: 600;
       transition: background var(--transition), border-color var(--transition);
+      display: inline-flex; align-items: center;
     }
     .btn-secondary:hover { background: var(--border); border-color: #cdb898; }
     .btn-danger {
-      background: #d9534f;
-      color: #fff;
-      border: none;
-      padding: 10px 22px;
-      border-radius: 50px;
-      font-size: 0.95rem;
-      cursor: pointer;
-      font-weight: 600;
+      background: #d9534f; color: #fff; border: none;
+      padding: 10px 22px; border-radius: 50px;
+      font-size: 0.95rem; cursor: pointer; font-weight: 600;
+      display: inline-flex; align-items: center;
       transition: background var(--transition), transform var(--transition);
     }
     .btn-danger:hover { background: #c0392b; transform: translateY(-1px); }
@@ -463,67 +382,27 @@
     /* ── Detail Modal ── */
     .detail-modal { max-width: 600px; }
     .detail-img-wrap {
-      width: 100%;
-      aspect-ratio: 16/10;
+      width: 100%; aspect-ratio: 16/10;
       background: linear-gradient(135deg, #e8d5b7 0%, #d4b896 100%);
-      border-radius: 12px;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 5rem;
-      color: var(--copper-light);
-      margin-bottom: 20px;
+      border-radius: 12px; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 5rem; color: var(--copper-light); margin-bottom: 20px;
     }
-    .detail-img-wrap img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      background: #f5ead8;
-    }
-    .detail-title {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: var(--text);
-      margin-bottom: 14px;
-    }
-    .detail-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-    .detail-field {
-      background: var(--cream);
-      border-radius: 10px;
-      padding: 12px 14px;
-    }
+    .detail-img-wrap img { width: 100%; height: 100%; object-fit: contain; background: #f5ead8; }
+    .detail-title { font-size: 1.5rem; font-weight: 700; color: var(--text); margin-bottom: 14px; }
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+    .detail-field { background: var(--cream); border-radius: 10px; padding: 12px 14px; }
     .detail-field-label {
-      font-size: 0.75rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-      color: var(--copper);
-      margin-bottom: 4px;
+      font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.6px; color: var(--copper); margin-bottom: 4px;
     }
-    .detail-field-value {
-      font-size: 0.95rem;
-      color: var(--text);
-    }
-    .detail-notes {
-      grid-column: 1 / -1;
-    }
-    .detail-notes .detail-field-value {
-      white-space: pre-wrap;
-      line-height: 1.6;
-    }
+    .detail-field-value { font-size: 0.95rem; color: var(--text); }
+    .detail-full  { grid-column: 1 / -1; }
+    .detail-notes .detail-field-value { white-space: pre-wrap; line-height: 1.6; }
 
     /* ── Confirm dialog ── */
     .confirm-modal { max-width: 380px; }
-    .confirm-modal .modal-body {
-      text-align: center;
-      padding: 28px 24px 20px;
-    }
+    .confirm-modal .modal-body { text-align: center; padding: 28px 24px 20px; }
     .confirm-icon { font-size: 2.8rem; margin-bottom: 12px; }
     .confirm-modal h3 { font-size: 1.15rem; margin-bottom: 8px; }
     .confirm-modal p { font-size: 0.9rem; color: var(--text-light); }
@@ -540,6 +419,7 @@
       .gallery { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; }
       .detail-grid { grid-template-columns: 1fr; }
       .modal-body, .modal-footer { padding-left: 16px; padding-right: 16px; }
+      .form-row { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -563,25 +443,46 @@
 
 <main>
   <div class="toolbar">
+    <div class="view-toggle">
+      <button id="btnGallery" class="view-btn active" onclick="setView('gallery')">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Galerie
+      </button>
+      <button id="btnMap" class="view-btn" onclick="setView('map')">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+        Weltkarte
+      </button>
+    </div>
     <div class="search-wrap">
       <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input class="search-input" type="text" id="searchInput" placeholder="Nach Motiv oder Ort suchen…" oninput="renderGallery()">
+      <input class="search-input" type="text" id="searchInput" placeholder="Nach Motiv oder Ort suchen…" oninput="onFilterChange()">
     </div>
-    <select class="filter-select" id="filterLocation" onchange="renderGallery()">
+    <select class="filter-select" id="filterLocation" onchange="onFilterChange()">
       <option value="">Alle Orte</option>
     </select>
     <span class="count-badge" id="countBadge"></span>
   </div>
 
-  <div id="gallery" class="gallery"></div>
-  <div id="emptyState" class="empty-state" style="display:none">
-    <div class="empty-icon">🪙</div>
-    <h2>Noch keine Münzen</h2>
-    <p>Füge deine erste Quetschmünze hinzu und starte deine Sammlung!</p>
-    <button class="btn-primary" onclick="openAddModal()">
-      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      Erste Münze hinzufügen
-    </button>
+  <!-- Gallery -->
+  <div id="galleryView">
+    <div id="gallery" class="gallery"></div>
+    <div id="emptyState" class="empty-state" style="display:none">
+      <div class="empty-icon">🪙</div>
+      <h2>Noch keine Münzen</h2>
+      <p>Füge deine erste Quetschmünze hinzu und starte deine Sammlung!</p>
+      <button class="btn-primary" onclick="openAddModal()">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Erste Münze hinzufügen
+      </button>
+    </div>
+  </div>
+
+  <!-- Map -->
+  <div id="mapView" style="display:none">
+    <div id="mapContainer">
+      <div id="map"></div>
+    </div>
+    <div id="mapNoCoordsBox" class="map-no-coords" style="display:none"></div>
   </div>
 </main>
 
@@ -611,11 +512,17 @@
         <label for="inputLocation">Ort *</label>
         <input type="text" id="inputLocation" placeholder="z.B. Schwangau, Bayern" required>
       </div>
-      <div class="form-group">
-        <label for="inputDate">Datum</label>
-        <input type="date" id="inputDate">
+      <div class="form-row">
+        <div class="form-group" style="margin-bottom:0">
+          <label for="inputDate">Datum</label>
+          <input type="date" id="inputDate">
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label for="inputPressedBy">Gequetscht von</label>
+          <input type="text" id="inputPressedBy" placeholder="z.B. Papa, Lena…">
+        </div>
       </div>
-      <div class="form-group">
+      <div class="form-group" style="margin-top:18px">
         <label for="inputNotes">Notizen</label>
         <textarea id="inputNotes" placeholder="Besondere Erinnerungen, Automat-Nummer, Preis…"></textarea>
       </div>
@@ -673,30 +580,36 @@
 
 <script>
   // ── Storage ──────────────────────────────────────────────
-  const STORE_KEY = 'quetschmuenzen_v1';
+  const STORE_KEY     = 'quetschmuenzen_v1';
+  const GEO_CACHE_KEY = 'quetschmuenzen_geocache_v1';
 
   function loadCoins() {
     try { return JSON.parse(localStorage.getItem(STORE_KEY)) || []; }
     catch { return []; }
   }
-  function saveCoins(coins) {
-    localStorage.setItem(STORE_KEY, JSON.stringify(coins));
-  }
+  function saveCoins(list) { localStorage.setItem(STORE_KEY, JSON.stringify(list)); }
+
+  let geoCache = (() => {
+    try { return JSON.parse(localStorage.getItem(GEO_CACHE_KEY)) || {}; }
+    catch { return {}; }
+  })();
+  function saveGeoCache() { localStorage.setItem(GEO_CACHE_KEY, JSON.stringify(geoCache)); }
 
   // ── State ────────────────────────────────────────────────
-  let coins = loadCoins();
-  let editingId = null;
-  let pendingDeleteId = null;
-  let currentDetailId = null;
+  let coins          = loadCoins();
+  let editingId      = null;
+  let pendingDeleteId= null;
+  let currentDetailId= null;
   let currentPhotoData = null;
+  let currentView    = 'gallery';
+  let leafletMap     = null;
+  let mapMarkers     = [];
 
   // ── Utils ────────────────────────────────────────────────
-  function uid() {
-    return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-  }
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
   function formatDate(iso) {
     if (!iso) return '–';
-    const [y, m, d] = iso.split('-');
+    const [y,m,d] = iso.split('-');
     return `${d}.${m}.${y}`;
   }
   function escHtml(s) {
@@ -705,54 +618,89 @@
       .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
+  // ── Geocoding (Nominatim / OpenStreetMap) ────────────────
+  async function geocodeLocation(location) {
+    if (geoCache[location]) return geoCache[location];
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location)}&format=json&limit=1&accept-language=de`;
+      const res  = await fetch(url);
+      const data = await res.json();
+      if (data.length > 0) {
+        const coords = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+        geoCache[location] = coords;
+        saveGeoCache();
+        return coords;
+      }
+    } catch {}
+    geoCache[location] = null;
+    saveGeoCache();
+    return null;
+  }
+
+  async function geocodeMissingCoins() {
+    const uniqueLocs = [...new Set(coins.map(c => c.location).filter(Boolean))];
+    for (const loc of uniqueLocs) {
+      if (geoCache[loc] !== undefined) continue;
+      await geocodeLocation(loc);
+      await new Promise(r => setTimeout(r, 1100)); // respect 1 req/s limit
+    }
+    if (currentView === 'map') renderMap();
+  }
+
+  // ── View switching ───────────────────────────────────────
+  function setView(v) {
+    currentView = v;
+    document.getElementById('btnGallery').classList.toggle('active', v === 'gallery');
+    document.getElementById('btnMap').classList.toggle('active', v === 'map');
+    document.getElementById('galleryView').style.display = v === 'gallery' ? '' : 'none';
+    document.getElementById('mapView').style.display     = v === 'map'     ? '' : 'none';
+    if (v === 'map') {
+      initMap();
+      renderMap();
+    }
+  }
+
+  function onFilterChange() {
+    renderGallery();
+    if (currentView === 'map') renderMap();
+  }
+
   // ── Gallery ──────────────────────────────────────────────
   function getFilteredCoins() {
-    const q = document.getElementById('searchInput').value.trim().toLowerCase();
+    const q   = document.getElementById('searchInput').value.trim().toLowerCase();
     const loc = document.getElementById('filterLocation').value;
     return coins.filter(c => {
-      const matchSearch = !q ||
-        c.name.toLowerCase().includes(q) ||
-        c.location.toLowerCase().includes(q);
+      const matchQ   = !q   || c.name.toLowerCase().includes(q) || c.location.toLowerCase().includes(q);
       const matchLoc = !loc || c.location === loc;
-      return matchSearch && matchLoc;
+      return matchQ && matchLoc;
     });
   }
 
   function renderGallery() {
     const filtered = getFilteredCoins();
-    const gallery = document.getElementById('gallery');
-    const empty   = document.getElementById('emptyState');
-    const badge   = document.getElementById('countBadge');
+    const gallery  = document.getElementById('gallery');
+    const empty    = document.getElementById('emptyState');
+    const badge    = document.getElementById('countBadge');
 
     if (coins.length === 0) {
-      gallery.innerHTML = '';
-      gallery.style.display = 'none';
-      empty.style.display = 'block';
-      badge.textContent = '';
+      gallery.innerHTML = ''; gallery.style.display = 'none';
+      empty.style.display = 'block'; badge.textContent = '';
       return;
     }
-
-    gallery.style.display = 'grid';
-    empty.style.display = 'none';
+    gallery.style.display = 'grid'; empty.style.display = 'none';
     badge.textContent = filtered.length === coins.length
       ? `${coins.length} Münze${coins.length !== 1 ? 'n' : ''}`
       : `${filtered.length} von ${coins.length} Münze${coins.length !== 1 ? 'n' : ''}`;
 
     if (filtered.length === 0) {
-      gallery.innerHTML = `
-        <div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text-light)">
-          <div style="font-size:2.5rem;margin-bottom:12px">🔍</div>
-          <p style="font-size:1rem">Keine Münzen gefunden. Andere Suchbegriffe versuchen?</p>
-        </div>`;
+      gallery.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text-light)"><div style="font-size:2.5rem;margin-bottom:12px">🔍</div><p>Keine Münzen gefunden.</p></div>`;
       return;
     }
 
     gallery.innerHTML = filtered.map(coin => `
       <div class="card" onclick="openDetail('${coin.id}')">
         <div class="card-img">
-          ${coin.photo
-            ? `<img src="${coin.photo}" alt="${escHtml(coin.name)}" loading="lazy">`
-            : '🪙'}
+          ${coin.photo ? `<img src="${coin.photo}" alt="${escHtml(coin.name)}" loading="lazy">` : '🪙'}
         </div>
         <div class="card-actions">
           <button class="card-btn card-btn-edit" title="Bearbeiten"
@@ -771,10 +719,13 @@
               <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
               ${escHtml(coin.location)}
             </div>
-            ${coin.date ? `
-            <div class="card-meta-item">
+            ${coin.date ? `<div class="card-meta-item">
               <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
               ${formatDate(coin.date)}
+            </div>` : ''}
+            ${coin.pressedBy ? `<div class="card-meta-item">
+              <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              ${escHtml(coin.pressedBy)}
             </div>` : ''}
           </div>
         </div>
@@ -784,10 +735,111 @@
 
   function updateLocationFilter() {
     const sel = document.getElementById('filterLocation');
-    const current = sel.value;
-    const locations = [...new Set(coins.map(c => c.location).filter(Boolean))].sort();
+    const cur = sel.value;
+    const locs = [...new Set(coins.map(c => c.location).filter(Boolean))].sort();
     sel.innerHTML = '<option value="">Alle Orte</option>' +
-      locations.map(l => `<option value="${escHtml(l)}" ${l === current ? 'selected' : ''}>${escHtml(l)}</option>`).join('');
+      locs.map(l => `<option value="${escHtml(l)}"${l===cur?' selected':''}>${escHtml(l)}</option>`).join('');
+  }
+
+  // ── Map ──────────────────────────────────────────────────
+  function initMap() {
+    if (leafletMap) return;
+    document.getElementById('mapContainer').style.display = 'block';
+    leafletMap = L.map('map', { zoomControl: true }).setView([20, 10], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 19,
+    }).addTo(leafletMap);
+  }
+
+  function makeCoinIcon(count) {
+    return L.divIcon({
+      className: '',
+      html: `<div style="
+        width:${count > 1 ? 44 : 36}px; height:${count > 1 ? 44 : 36}px;
+        background: radial-gradient(circle at 38% 38%, #d4845a, #8b4513);
+        border: 3px solid #f0d080;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        color: #fff; font-size: ${count > 1 ? '13px' : '18px'};
+        font-weight: 700;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.3);
+        cursor: pointer;
+      ">${count > 1 ? count : '🪙'}</div>`,
+      iconSize: [count > 1 ? 44 : 36, count > 1 ? 44 : 36],
+      iconAnchor: [count > 1 ? 22 : 18, count > 1 ? 22 : 18],
+      popupAnchor: [0, -(count > 1 ? 24 : 20)],
+    });
+  }
+
+  function renderMap() {
+    if (!leafletMap) return;
+
+    // Remove old markers
+    mapMarkers.forEach(m => leafletMap.removeLayer(m));
+    mapMarkers = [];
+
+    const filtered    = getFilteredCoins();
+    const noCoordsList= [];
+
+    // Group by location
+    const byLocation = {};
+    filtered.forEach(coin => {
+      const coords = geoCache[coin.location];
+      if (coords) {
+        const key = `${coords.lat},${coords.lng}`;
+        if (!byLocation[key]) byLocation[key] = { coords, coins: [] };
+        byLocation[key].coins.push(coin);
+      } else {
+        noCoordsList.push(coin);
+      }
+    });
+
+    // Add markers
+    Object.values(byLocation).forEach(({ coords, coins: group }) => {
+      const marker = L.marker([coords.lat, coords.lng], { icon: makeCoinIcon(group.length) });
+
+      const popupHtml = `
+        <div class="popup-header">
+          <span>📍</span> ${escHtml(group[0].location)}
+        </div>
+        <div class="popup-coins">
+          ${group.map(c => `
+            <div class="popup-coin-item" onclick="closeAllPopups();openDetail('${c.id}')">
+              <div class="popup-coin-thumb">
+                ${c.photo ? `<img src="${c.photo}" alt="">` : '🪙'}
+              </div>
+              <div class="popup-coin-info">
+                <div class="popup-coin-name">${escHtml(c.name)}</div>
+                <div class="popup-coin-date">${c.date ? formatDate(c.date) : ''}${c.pressedBy ? (c.date ? ' · ' : '') + escHtml(c.pressedBy) : ''}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>`;
+
+      marker.bindPopup(popupHtml, { maxWidth: 280, minWidth: 220 });
+      marker.addTo(leafletMap);
+      mapMarkers.push(marker);
+    });
+
+    // No-coords notice
+    const box = document.getElementById('mapNoCoordsBox');
+    if (noCoordsList.length > 0) {
+      box.style.display = 'block';
+      box.innerHTML = `<strong>⚠️ Koordinaten noch nicht gefunden für:</strong> ${noCoordsList.map(c => escHtml(c.location)).filter((v,i,a)=>a.indexOf(v)===i).join(', ')} — Koordinaten werden automatisch im Hintergrund nachgeladen.`;
+    } else {
+      box.style.display = 'none';
+    }
+
+    // Fit bounds if markers exist
+    if (mapMarkers.length > 0) {
+      const group = L.featureGroup(mapMarkers);
+      leafletMap.fitBounds(group.getBounds().pad(0.3), { maxZoom: 10 });
+    }
+  }
+
+  function closeAllPopups() {
+    mapMarkers.forEach(m => m.closePopup());
   }
 
   // ── Photo handling ───────────────────────────────────────
@@ -798,21 +850,17 @@
     reader.onload = ev => setPhotoPreview(ev.target.result);
     reader.readAsDataURL(file);
   }
-
   function setPhotoPreview(dataUrl) {
     currentPhotoData = dataUrl;
-    const preview = document.getElementById('photoPreview');
-    preview.src = dataUrl;
-    preview.classList.add('visible');
+    const p = document.getElementById('photoPreview');
+    p.src = dataUrl; p.classList.add('visible');
     document.getElementById('photoRemoveBtn').classList.add('visible');
     document.getElementById('uploadArea').style.paddingBottom = '0';
   }
-
   function removePhoto() {
     currentPhotoData = null;
-    const preview = document.getElementById('photoPreview');
-    preview.src = '';
-    preview.classList.remove('visible');
+    const p = document.getElementById('photoPreview');
+    p.src = ''; p.classList.remove('visible');
     document.getElementById('photoRemoveBtn').classList.remove('visible');
     document.getElementById('photoInput').value = '';
     document.getElementById('uploadArea').style.paddingBottom = '';
@@ -824,8 +872,7 @@
     area.addEventListener('dragover', e => { e.preventDefault(); area.classList.add('drag-over'); });
     area.addEventListener('dragleave', () => area.classList.remove('drag-over'));
     area.addEventListener('drop', e => {
-      e.preventDefault();
-      area.classList.remove('drag-over');
+      e.preventDefault(); area.classList.remove('drag-over');
       const file = e.dataTransfer.files[0];
       if (file && file.type.startsWith('image/')) {
         const reader = new FileReader();
@@ -835,33 +882,26 @@
     });
     renderGallery();
     updateLocationFilter();
+    geocodeMissingCoins();
   });
 
   // ── Modals ───────────────────────────────────────────────
-  function openModal(id)  {
-    document.getElementById(id).style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-  }
-  function closeModal(id) {
-    document.getElementById(id).style.display = 'none';
-    document.body.style.overflow = '';
-  }
-  function handleOverlayClick(e, id) {
-    if (e.target === document.getElementById(id)) closeModal(id);
-  }
+  function openModal(id)  { document.getElementById(id).style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+  function closeModal(id) { document.getElementById(id).style.display = 'none';  document.body.style.overflow = ''; }
+  function handleOverlayClick(e, id) { if (e.target === document.getElementById(id)) closeModal(id); }
 
   function resetForm() {
-    document.getElementById('inputName').value = '';
-    document.getElementById('inputLocation').value = '';
-    document.getElementById('inputDate').value = '';
-    document.getElementById('inputNotes').value = '';
+    document.getElementById('inputName').value      = '';
+    document.getElementById('inputLocation').value  = '';
+    document.getElementById('inputDate').value      = '';
+    document.getElementById('inputPressedBy').value = '';
+    document.getElementById('inputNotes').value     = '';
     removePhoto();
   }
 
   function openAddModal() {
-    editingId = null;
-    resetForm();
-    document.getElementById('formModalTitle').textContent = 'Münze hinzufügen';
+    editingId = null; resetForm();
+    document.getElementById('formModalTitle').textContent  = 'Münze hinzufügen';
     document.getElementById('formSubmitLabel').textContent = 'Hinzufügen';
     document.getElementById('inputDate').value = new Date().toISOString().split('T')[0];
     openModal('formOverlay');
@@ -872,46 +912,58 @@
     const coin = coins.find(c => c.id === id);
     if (!coin) return;
     editingId = id;
-    document.getElementById('formModalTitle').textContent = 'Münze bearbeiten';
+    document.getElementById('formModalTitle').textContent  = 'Münze bearbeiten';
     document.getElementById('formSubmitLabel').textContent = 'Speichern';
-    document.getElementById('inputName').value = coin.name;
-    document.getElementById('inputLocation').value = coin.location;
-    document.getElementById('inputDate').value = coin.date || '';
-    document.getElementById('inputNotes').value = coin.notes || '';
-    if (coin.photo) setPhotoPreview(coin.photo);
-    else removePhoto();
+    document.getElementById('inputName').value      = coin.name;
+    document.getElementById('inputLocation').value  = coin.location;
+    document.getElementById('inputDate').value      = coin.date || '';
+    document.getElementById('inputPressedBy').value = coin.pressedBy || '';
+    document.getElementById('inputNotes').value     = coin.notes || '';
+    if (coin.photo) setPhotoPreview(coin.photo); else removePhoto();
     openModal('formOverlay');
   }
 
   // ── Save ─────────────────────────────────────────────────
-  function saveCoin() {
-    const name     = document.getElementById('inputName').value.trim();
-    const location = document.getElementById('inputLocation').value.trim();
-    const date     = document.getElementById('inputDate').value;
-    const notes    = document.getElementById('inputNotes').value.trim();
+  async function saveCoin() {
+    const name      = document.getElementById('inputName').value.trim();
+    const location  = document.getElementById('inputLocation').value.trim();
+    const date      = document.getElementById('inputDate').value;
+    const pressedBy = document.getElementById('inputPressedBy').value.trim();
+    const notes     = document.getElementById('inputNotes').value.trim();
 
-    if (!name) { highlight('inputName'); return; }
+    if (!name)     { highlight('inputName');     return; }
     if (!location) { highlight('inputLocation'); return; }
+
+    const locationChanged = editingId
+      ? coins.find(c => c.id === editingId)?.location !== location
+      : true;
 
     if (editingId) {
       const idx = coins.findIndex(c => c.id === editingId);
       if (idx !== -1) {
-        coins[idx] = { ...coins[idx], name, location, date, notes, photo: currentPhotoData ?? coins[idx].photo };
+        coins[idx] = { ...coins[idx], name, location, date, pressedBy, notes,
+          photo: currentPhotoData ?? coins[idx].photo };
       }
     } else {
-      coins.unshift({ id: uid(), name, location, date, notes, photo: currentPhotoData || null, createdAt: Date.now() });
+      coins.unshift({ id: uid(), name, location, date, pressedBy, notes,
+        photo: currentPhotoData || null, createdAt: Date.now() });
     }
 
     saveCoins(coins);
     updateLocationFilter();
     renderGallery();
     closeModal('formOverlay');
+
+    // Geocode new/changed location in background
+    if (locationChanged && geoCache[location] === undefined) {
+      await geocodeLocation(location);
+      if (currentView === 'map') renderMap();
+    }
   }
 
   function highlight(id) {
     const el = document.getElementById(id);
-    el.style.borderColor = '#d9534f';
-    el.focus();
+    el.style.borderColor = '#d9534f'; el.focus();
     setTimeout(() => el.style.borderColor = '', 1500);
   }
 
@@ -921,8 +973,7 @@
     if (!coin) return;
     currentDetailId = id;
 
-    const body = document.getElementById('detailBody');
-    body.innerHTML = `
+    document.getElementById('detailBody').innerHTML = `
       <div class="detail-img-wrap">
         ${coin.photo ? `<img src="${coin.photo}" alt="${escHtml(coin.name)}">` : '🪙'}
       </div>
@@ -936,34 +987,30 @@
           <div class="detail-field-label">Datum</div>
           <div class="detail-field-value">${formatDate(coin.date)}</div>
         </div>
+        ${coin.pressedBy ? `
+        <div class="detail-field detail-full">
+          <div class="detail-field-label">Gequetscht von</div>
+          <div class="detail-field-value">${escHtml(coin.pressedBy)}</div>
+        </div>` : ''}
         ${coin.notes ? `
-        <div class="detail-field detail-notes">
+        <div class="detail-field detail-full detail-notes">
           <div class="detail-field-label">Notizen</div>
           <div class="detail-field-value">${escHtml(coin.notes)}</div>
         </div>` : ''}
-      </div>
-    `;
+      </div>`;
 
     openModal('detailOverlay');
   }
 
-  function editFromDetail() {
-    closeModal('detailOverlay');
-    openEditModal(currentDetailId);
-  }
-
-  function deleteFromDetail() {
-    closeModal('detailOverlay');
-    askDelete(currentDetailId);
-  }
+  function editFromDetail()   { closeModal('detailOverlay'); openEditModal(currentDetailId); }
+  function deleteFromDetail() { closeModal('detailOverlay'); askDelete(currentDetailId); }
 
   // ── Delete ───────────────────────────────────────────────
   function askDelete(id) {
     const coin = coins.find(c => c.id === id);
     if (!coin) return;
     pendingDeleteId = id;
-    document.getElementById('confirmText').textContent =
-      `"${coin.name}" wird unwiderruflich gelöscht.`;
+    document.getElementById('confirmText').textContent = `"${coin.name}" wird unwiderruflich gelöscht.`;
     openModal('confirmOverlay');
   }
 
@@ -974,6 +1021,7 @@
     saveCoins(coins);
     updateLocationFilter();
     renderGallery();
+    if (currentView === 'map') renderMap();
     closeModal('confirmOverlay');
   }
 
