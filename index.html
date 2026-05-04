@@ -858,12 +858,16 @@
 
   // ── Geocoding ────────────────────────────────────────────
   async function geocodeLocation(location) {
-    if (geoCache[location] !== undefined) return geoCache[location];
+    const cached = geoCache[location];
+    if (cached !== undefined && (cached === null || cached.city !== undefined)) return cached;
     try {
-      const res  = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location)}&format=json&limit=1&accept-language=de`);
+      const res  = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location)}&format=json&limit=1&accept-language=de&addressdetails=1`);
       const data = await res.json();
       if (data.length > 0) {
-        const coords = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+        const a = data[0].address || {};
+        const city = a.city || a.town || a.village || a.municipality || a.hamlet || a.suburb || null;
+        const country = a.country || null;
+        const coords = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon), city, country };
         geoCache[location] = coords; saveGeoCache(); return coords;
       }
     } catch {}
@@ -872,11 +876,14 @@
   async function geocodeMissingCoins() {
     const locs = [...new Set(coins.map(c=>c.location).filter(Boolean))];
     for (const loc of locs) {
-      if (geoCache[loc] !== undefined) continue;
+      const cached = geoCache[loc];
+      // re-geocode if missing entirely, or if old entry has no city/country yet
+      if (cached !== undefined && (cached === null || cached.city !== undefined)) continue;
       await geocodeLocation(loc);
       await new Promise(r => setTimeout(r,1100));
     }
     if (currentView === 'map') renderMap();
+    if (currentView === 'stats') renderStats();
   }
 
   // ── View ─────────────────────────────────────────────────
@@ -1008,11 +1015,20 @@
     const thisYear  = new Date().getFullYear();
     const thisYearN = coins.filter(c=>c.date?.startsWith(thisYear)).length;
 
-    // Location counts
-    const locCount = {};
-    coins.forEach(c => { if (c.location) locCount[c.location]=(locCount[c.location]||0)+1; });
-    const topLocs = Object.entries(locCount).sort((a,b)=>b[1]-a[1]).slice(0,8);
-    const maxLocCount = topLocs[0]?.[1] || 1;
+    // City + country counts (from geocache)
+    const cityCount = {}, countryCount = {};
+    coins.forEach(c => {
+      if (!c.location) return;
+      const geo = geoCache[c.location];
+      if (geo) {
+        if (geo.city)    cityCount[geo.city]       = (cityCount[geo.city]    || 0) + 1;
+        if (geo.country) countryCount[geo.country] = (countryCount[geo.country] || 0) + 1;
+      }
+    });
+    const topCities    = Object.entries(cityCount).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    const topCountries = Object.entries(countryCount).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    const maxCityCount    = topCities[0]?.[1]    || 1;
+    const maxCountryCount = topCountries[0]?.[1] || 1;
 
     // Person counts
     const perCount = {};
@@ -1037,15 +1053,29 @@
         ${dates.length > 1 ? `<div class="stat-card"><div class="stat-value" style="font-size:1.1rem">${formatDate(dates[dates.length-1])}</div><div class="stat-label">Letzte Münze</div></div>` : ''}
       </div>
 
-      ${topLocs.length ? `
+      ${topCities.length ? `
       <div class="stats-section">
-        <h3>🗺️ Top Orte</h3>
+        <h3>🏙️ Top Städte</h3>
         <div class="stats-list">
-          ${topLocs.map(([loc,cnt],i) => `
+          ${topCities.map(([city,cnt],i) => `
             <div class="stats-list-item">
               <span class="rank">${i+1}.</span>
-              <span class="name">${escHtml(loc)}</span>
-              <div class="bar-wrap"><div class="bar" style="width:${Math.round(cnt/maxLocCount*100)}%"></div></div>
+              <span class="name">${escHtml(city)}</span>
+              <div class="bar-wrap"><div class="bar" style="width:${Math.round(cnt/maxCityCount*100)}%"></div></div>
+              <span class="cnt">${cnt}</span>
+            </div>`).join('')}
+        </div>
+      </div>` : ''}
+
+      ${topCountries.length ? `
+      <div class="stats-section">
+        <h3>🌍 Top Länder</h3>
+        <div class="stats-list">
+          ${topCountries.map(([country,cnt],i) => `
+            <div class="stats-list-item">
+              <span class="rank">${i+1}.</span>
+              <span class="name">${escHtml(country)}</span>
+              <div class="bar-wrap"><div class="bar" style="width:${Math.round(cnt/maxCountryCount*100)}%"></div></div>
               <span class="cnt">${cnt}</span>
             </div>`).join('')}
         </div>
