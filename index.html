@@ -445,6 +445,11 @@
     .upload-icon { font-size: 2.2rem; margin-bottom: 8px; }
     .upload-text { font-size: 0.9rem; color: var(--text-light); }
     .upload-text strong { color: var(--copper); }
+    .upload-text .touch-hint { display: none; }
+    @media (hover: none) {
+      .upload-text .desktop-hint { display: none; }
+      .upload-text .touch-hint   { display: inline; }
+    }
     .photo-preview {
       width: 100%; max-height: 220px; object-fit: contain;
       border-radius: 8px; margin-top: 12px; display: none;
@@ -593,7 +598,10 @@
             <div class="photo-upload-area" id="uploadArea">
               <input type="file" id="photoInput" accept="image/*" onchange="handlePhotoSelect(event,1)">
               <div class="upload-icon">📷</div>
-              <div class="upload-text"><strong>Klicken</strong> oder hierher ziehen</div>
+              <div class="upload-text">
+                <span class="desktop-hint"><strong>Klicken</strong> oder Bild hierher ziehen</span>
+                <span class="touch-hint"><strong>Tippen</strong> zum Fotografieren oder aus Mediathek wählen</span>
+              </div>
             </div>
             <img id="photoPreview" class="photo-preview" alt="Vorschau Vorderseite">
             <button class="photo-remove-btn" id="photoRemoveBtn" onclick="removePhoto(1)">Foto entfernen</button>
@@ -603,7 +611,10 @@
             <div class="photo-upload-area" id="uploadArea2">
               <input type="file" id="photoInput2" accept="image/*" onchange="handlePhotoSelect(event,2)">
               <div class="upload-icon">📷</div>
-              <div class="upload-text"><strong>Klicken</strong> oder hierher ziehen</div>
+              <div class="upload-text">
+                <span class="desktop-hint"><strong>Klicken</strong> oder Bild hierher ziehen</span>
+                <span class="touch-hint"><strong>Tippen</strong> zum Fotografieren oder aus Mediathek wählen</span>
+              </div>
             </div>
             <img id="photoPreview2" class="photo-preview" alt="Vorschau Rückseite">
             <button class="photo-remove-btn" id="photoRemoveBtn2" onclick="removePhoto(2)">Foto entfernen</button>
