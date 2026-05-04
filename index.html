@@ -369,15 +369,29 @@
       background: rgba(30,15,5,0.55);
       backdrop-filter: blur(3px);
       z-index: 500;
-      display: flex; align-items: center; justify-content: center;
-      padding: 20px; animation: fadeIn 0.18s ease;
+      display: flex;
+      /* flex-start + padding-top so modal stays near top when keyboard opens */
+      align-items: flex-start;
+      justify-content: center;
+      padding: 20px;
+      padding-top: max(20px, env(safe-area-inset-top));
+      overflow-y: auto;
+      animation: fadeIn 0.18s ease;
     }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     .modal {
       background: var(--warm-white); border-radius: 20px;
       box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-      width: 100%; max-width: 540px; max-height: 90vh;
-      overflow-y: auto; animation: slideUp 0.22s ease;
+      width: 100%; max-width: 540px;
+      /* dvh = dynamic viewport height: shrinks with keyboard on iOS 16+
+         90vh = fallback for older devices */
+      max-height: 90vh;
+      max-height: 90dvh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      animation: slideUp 0.22s ease;
+      /* Keep some space at the bottom so the footer button is always reachable */
+      margin-bottom: calc(20px + env(safe-area-inset-bottom));
     }
     @keyframes slideUp {
       from { transform: translateY(24px); opacity: 0; }
@@ -407,6 +421,11 @@
 
     /* ── Form ── */
     .form-group { margin-bottom: 18px; }
+    .field-error {
+      display: none; margin-top: 5px;
+      font-size: 0.82rem; color: #c0392b; font-weight: 600;
+    }
+    .field-error.visible { display: block; }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
     label {
       display: block; font-size: 0.88rem; font-weight: 600;
@@ -623,11 +642,15 @@
       </div>
       <div class="form-group">
         <label for="inputName">Motiv *</label>
-        <input type="text" id="inputName" placeholder="z.B. Schloss Neuschwanstein" required>
+        <input type="text" id="inputName" placeholder="z.B. Schloss Neuschwanstein"
+               oninput="clearError('inputName')">
+        <div class="field-error" id="errorName">Bitte Motiv eingeben</div>
       </div>
       <div class="form-group">
         <label for="inputLocation">Ort *</label>
-        <input type="text" id="inputLocation" placeholder="z.B. Schwangau, Bayern" required>
+        <input type="text" id="inputLocation" placeholder="z.B. Schwangau, Bayern"
+               oninput="clearError('inputLocation')">
+        <div class="field-error" id="errorLocation">Bitte Ort eingeben</div>
       </div>
       <div class="form-row">
         <div class="form-group" style="margin-bottom:0">
@@ -1051,7 +1074,6 @@
     document.getElementById('formSubmitLabel').textContent = 'Hinzufügen';
     document.getElementById('inputDate').value = new Date().toISOString().split('T')[0];
     openModal('formOverlay');
-    setTimeout(() => document.getElementById('inputName').focus(), 100);
   }
 
   function openEditModal(id) {
@@ -1078,8 +1100,8 @@
     const pressedBy = document.getElementById('inputPressedBy').value.trim();
     const notes     = document.getElementById('inputNotes').value.trim();
 
-    if (!name)     { highlight('inputName');     return; }
-    if (!location) { highlight('inputLocation'); return; }
+    if (!name)     { highlight('inputName',     'errorName');     return; }
+    if (!location) { highlight('inputLocation', 'errorLocation'); return; }
 
     const locationChanged = editingId
       ? coins.find(c => c.id === editingId)?.location !== location
@@ -1110,10 +1132,18 @@
     }
   }
 
-  function highlight(id) {
-    const el = document.getElementById(id);
-    el.style.borderColor = '#d9534f'; el.focus();
-    setTimeout(() => el.style.borderColor = '', 1500);
+  function highlight(fieldId, errorId) {
+    const el  = document.getElementById(fieldId);
+    const err = document.getElementById(errorId);
+    el.style.borderColor = '#c0392b';
+    if (err) err.classList.add('visible');
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  function clearError(fieldId) {
+    const el = document.getElementById(fieldId);
+    el.style.borderColor = '';
+    const err = document.getElementById('error' + fieldId.replace('input',''));
+    if (err) err.classList.remove('visible');
   }
 
   // ── Detail ───────────────────────────────────────────────
