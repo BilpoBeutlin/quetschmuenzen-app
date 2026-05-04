@@ -34,6 +34,8 @@
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    /* Prevent any horizontal overflow / sideways shift site-wide */
+    html, body { overflow-x: hidden; }
     /* iOS: remove grey tap flash on buttons/cards */
     a, button, [onclick] { -webkit-tap-highlight-color: transparent; }
     /* iOS: smooth momentum scrolling in modals */
@@ -133,24 +135,23 @@
     }
 
     .search-wrap {
-      position: relative; flex: 1; min-width: 200px;
-    }
-    .search-wrap svg {
-      position: absolute; left: 13px; top: 50%;
-      transform: translateY(-50%);
-      color: var(--text-light); pointer-events: none;
-    }
-    .search-input {
-      width: 100%;
-      padding: 11px 14px 11px 40px;
+      display: flex; align-items: center; gap: 8px;
+      flex: 1; min-width: 200px;
+      background: var(--warm-white);
       border: 2px solid var(--border); border-radius: 50px;
-      font-size: 0.95rem; background: var(--warm-white); color: var(--text);
+      padding: 0 16px;
       transition: border-color var(--transition), box-shadow var(--transition);
-      outline: none;
     }
-    .search-input:focus {
+    .search-wrap:focus-within {
       border-color: var(--copper);
       box-shadow: 0 0 0 3px rgba(181,101,29,0.15);
+    }
+    .search-wrap svg { flex-shrink: 0; color: var(--text-light); }
+    .search-input {
+      flex: 1; border: none; background: transparent;
+      padding: 11px 0;
+      font-size: 16px; color: var(--text);
+      outline: none; min-width: 0;
     }
     select.filter-select {
       padding: 11px 16px;
@@ -375,6 +376,7 @@
       justify-content: center;
       padding: 20px;
       padding-top: max(20px, env(safe-area-inset-top));
+      overflow-x: hidden;
       overflow-y: auto;
       animation: fadeIn 0.18s ease;
     }
