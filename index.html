@@ -257,15 +257,78 @@
     .popup-coin-name { font-size: 0.88rem; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .popup-coin-date { font-size: 0.75rem; color: var(--text-light); }
 
-    /* geocode status badge on cards */
-    .geo-badge {
-      position: absolute; bottom: 8px; right: 8px;
-      width: 18px; height: 18px; border-radius: 50%;
-      font-size: 10px; display: flex; align-items: center; justify-content: center;
-      opacity: 0.7;
+    /* ── Card flip (two-sided coins) ── */
+    .card-img-wrap {
+      position: relative; width: 100%; aspect-ratio: 1;
     }
-    .geo-badge.ok   { background: #c8f0c0; color: #2a7a1a; }
-    .geo-badge.miss { background: #f5e0c0; color: #8a5010; }
+    .card-img-face {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 3.5rem; color: var(--copper-light);
+      background: linear-gradient(135deg, #e8d5b7 0%, #d4b896 100%);
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      border-radius: 0;
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+    .card-img-face img { width: 100%; height: 100%; object-fit: cover; }
+    .card-img-face.back {
+      transform: rotateY(180deg);
+      opacity: 0; pointer-events: none;
+    }
+    .card-img-wrap.flipped .card-img-face.front {
+      transform: rotateY(-180deg); opacity: 0; pointer-events: none;
+    }
+    .card-img-wrap.flipped .card-img-face.back {
+      transform: rotateY(0deg); opacity: 1; pointer-events: auto;
+    }
+
+    .flip-btn {
+      position: absolute; bottom: 8px; left: 8px;
+      background: rgba(139,69,19,0.82);
+      color: #f0d080; border: none; border-radius: 50px;
+      padding: 4px 9px; font-size: 0.72rem; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; gap: 4px;
+      backdrop-filter: blur(4px);
+      transition: background var(--transition), transform var(--transition);
+      z-index: 2; white-space: nowrap;
+    }
+    .flip-btn:hover { background: rgba(139,69,19,1); transform: scale(1.06); }
+
+    /* ── Second photo upload ── */
+    .photo-row {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    }
+    .photo-slot { display: flex; flex-direction: column; gap: 6px; }
+    .photo-slot-label {
+      font-size: 0.8rem; font-weight: 700; color: var(--text-light);
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .photo-slot .photo-upload-area { padding: 16px 10px; }
+    .photo-slot .upload-icon { font-size: 1.6rem; margin-bottom: 4px; }
+    .photo-slot .upload-text { font-size: 0.78rem; }
+    .photo-slot .photo-preview { max-height: 140px; }
+
+    /* ── Detail two-photo layout ── */
+    .detail-photos {
+      display: grid; gap: 10px;
+      margin-bottom: 20px;
+    }
+    .detail-photos.two-up { grid-template-columns: 1fr 1fr; }
+    .detail-photo-slot { display: flex; flex-direction: column; gap: 6px; }
+    .detail-photo-slot-label {
+      font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.6px; color: var(--copper); text-align: center;
+    }
+    .detail-img-wrap {
+      aspect-ratio: 1;
+      background: linear-gradient(135deg, #e8d5b7 0%, #d4b896 100%);
+      border-radius: 12px; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 5rem; color: var(--copper-light);
+    }
+    .detail-photos.one-up .detail-img-wrap { aspect-ratio: 16/10; font-size: 5rem; }
+    .detail-img-wrap img { width: 100%; height: 100%; object-fit: contain; background: #f5ead8; }
 
     /* ── Modals ── */
     .overlay {
@@ -381,14 +444,6 @@
 
     /* ── Detail Modal ── */
     .detail-modal { max-width: 600px; }
-    .detail-img-wrap {
-      width: 100%; aspect-ratio: 16/10;
-      background: linear-gradient(135deg, #e8d5b7 0%, #d4b896 100%);
-      border-radius: 12px; overflow: hidden;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 5rem; color: var(--copper-light); margin-bottom: 20px;
-    }
-    .detail-img-wrap img { width: 100%; height: 100%; object-fit: contain; background: #f5ead8; }
     .detail-title { font-size: 1.5rem; font-weight: 700; color: var(--text); margin-bottom: 14px; }
     .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
     .detail-field { background: var(--cream); border-radius: 10px; padding: 12px 14px; }
@@ -495,14 +550,29 @@
     </div>
     <div class="modal-body">
       <div class="form-group">
-        <label>Foto</label>
-        <div class="photo-upload-area" id="uploadArea">
-          <input type="file" id="photoInput" accept="image/*" onchange="handlePhotoSelect(event)">
-          <div class="upload-icon">📷</div>
-          <div class="upload-text"><strong>Klicken</strong> oder Bild hierher ziehen</div>
+        <label>Fotos</label>
+        <div class="photo-row">
+          <div class="photo-slot">
+            <div class="photo-slot-label">Vorderseite</div>
+            <div class="photo-upload-area" id="uploadArea">
+              <input type="file" id="photoInput" accept="image/*" onchange="handlePhotoSelect(event,1)">
+              <div class="upload-icon">📷</div>
+              <div class="upload-text"><strong>Klicken</strong> oder hierher ziehen</div>
+            </div>
+            <img id="photoPreview" class="photo-preview" alt="Vorschau Vorderseite">
+            <button class="photo-remove-btn" id="photoRemoveBtn" onclick="removePhoto(1)">Foto entfernen</button>
+          </div>
+          <div class="photo-slot">
+            <div class="photo-slot-label">Rückseite <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></div>
+            <div class="photo-upload-area" id="uploadArea2">
+              <input type="file" id="photoInput2" accept="image/*" onchange="handlePhotoSelect(event,2)">
+              <div class="upload-icon">📷</div>
+              <div class="upload-text"><strong>Klicken</strong> oder hierher ziehen</div>
+            </div>
+            <img id="photoPreview2" class="photo-preview" alt="Vorschau Rückseite">
+            <button class="photo-remove-btn" id="photoRemoveBtn2" onclick="removePhoto(2)">Foto entfernen</button>
+          </div>
         </div>
-        <img id="photoPreview" class="photo-preview" alt="Vorschau">
-        <button class="photo-remove-btn" id="photoRemoveBtn" onclick="removePhoto()">Foto entfernen</button>
       </div>
       <div class="form-group">
         <label for="inputName">Motiv *</label>
@@ -600,7 +670,8 @@
   let editingId      = null;
   let pendingDeleteId= null;
   let currentDetailId= null;
-  let currentPhotoData = null;
+  let currentPhotoData  = null;
+  let currentPhotoData2 = null;
   let currentView    = 'gallery';
   let leafletMap     = null;
   let mapMarkers     = [];
@@ -699,8 +770,19 @@
 
     gallery.innerHTML = filtered.map(coin => `
       <div class="card" onclick="openDetail('${coin.id}')">
-        <div class="card-img">
-          ${coin.photo ? `<img src="${coin.photo}" alt="${escHtml(coin.name)}" loading="lazy">` : '🪙'}
+        <div class="card-img-wrap">
+          <div class="card-img-face front">
+            ${coin.photo ? `<img src="${coin.photo}" alt="${escHtml(coin.name)}" loading="lazy">` : '🪙'}
+          </div>
+          ${coin.photo2 ? `
+          <div class="card-img-face back">
+            <img src="${coin.photo2}" alt="Rückseite ${escHtml(coin.name)}" loading="lazy">
+          </div>
+          <button class="flip-btn" title="Umdrehen"
+            onclick="event.stopPropagation();flipCard('${coin.id}',this)">
+            <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.49-3"/></svg>
+            Rückseite
+          </button>` : ''}
         </div>
         <div class="card-actions">
           <button class="card-btn card-btn-edit" title="Bearbeiten"
@@ -843,32 +925,43 @@
   }
 
   // ── Photo handling ───────────────────────────────────────
-  function handlePhotoSelect(e) {
+  function handlePhotoSelect(e, slot) {
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = ev => setPhotoPreview(ev.target.result);
+    reader.onload = ev => setPhotoPreview(ev.target.result, slot);
     reader.readAsDataURL(file);
   }
-  function setPhotoPreview(dataUrl) {
-    currentPhotoData = dataUrl;
-    const p = document.getElementById('photoPreview');
+  function setPhotoPreview(dataUrl, slot) {
+    const n = slot === 2 ? '2' : '';
+    if (slot === 2) currentPhotoData2 = dataUrl; else currentPhotoData = dataUrl;
+    const p = document.getElementById('photoPreview' + n);
     p.src = dataUrl; p.classList.add('visible');
-    document.getElementById('photoRemoveBtn').classList.add('visible');
-    document.getElementById('uploadArea').style.paddingBottom = '0';
+    document.getElementById('photoRemoveBtn' + n).classList.add('visible');
+    document.getElementById('uploadArea' + n).style.paddingBottom = '0';
   }
-  function removePhoto() {
-    currentPhotoData = null;
-    const p = document.getElementById('photoPreview');
+  function removePhoto(slot) {
+    const n = slot === 2 ? '2' : '';
+    if (slot === 2) currentPhotoData2 = null; else currentPhotoData = null;
+    const p = document.getElementById('photoPreview' + n);
     p.src = ''; p.classList.remove('visible');
-    document.getElementById('photoRemoveBtn').classList.remove('visible');
-    document.getElementById('photoInput').value = '';
-    document.getElementById('uploadArea').style.paddingBottom = '';
+    document.getElementById('photoRemoveBtn' + n).classList.remove('visible');
+    document.getElementById('photoInput' + n).value = '';
+    document.getElementById('uploadArea' + n).style.paddingBottom = '';
   }
 
-  // Drag & drop
-  document.addEventListener('DOMContentLoaded', () => {
-    const area = document.getElementById('uploadArea');
+  function flipCard(coinId, btn) {
+    const wrap = btn.closest('.card').querySelector('.card-img-wrap');
+    const flipped = wrap.classList.toggle('flipped');
+    btn.innerHTML = flipped
+      ? `<svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3"/></svg> Vorderseite`
+      : `<svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.49-3"/></svg> Rückseite`;
+  }
+
+  // Drag & drop — attaches to one upload area by id
+  function setupDrop(areaId, slot) {
+    const area = document.getElementById(areaId);
+    if (!area) return;
     area.addEventListener('dragover', e => { e.preventDefault(); area.classList.add('drag-over'); });
     area.addEventListener('dragleave', () => area.classList.remove('drag-over'));
     area.addEventListener('drop', e => {
@@ -876,10 +969,15 @@
       const file = e.dataTransfer.files[0];
       if (file && file.type.startsWith('image/')) {
         const reader = new FileReader();
-        reader.onload = ev => setPhotoPreview(ev.target.result);
+        reader.onload = ev => setPhotoPreview(ev.target.result, slot);
         reader.readAsDataURL(file);
       }
     });
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    setupDrop('uploadArea',  1);
+    setupDrop('uploadArea2', 2);
     renderGallery();
     updateLocationFilter();
     geocodeMissingCoins();
@@ -896,7 +994,8 @@
     document.getElementById('inputDate').value      = '';
     document.getElementById('inputPressedBy').value = '';
     document.getElementById('inputNotes').value     = '';
-    removePhoto();
+    removePhoto(1);
+    removePhoto(2);
   }
 
   function openAddModal() {
@@ -919,7 +1018,8 @@
     document.getElementById('inputDate').value      = coin.date || '';
     document.getElementById('inputPressedBy').value = coin.pressedBy || '';
     document.getElementById('inputNotes').value     = coin.notes || '';
-    if (coin.photo) setPhotoPreview(coin.photo); else removePhoto();
+    if (coin.photo)  setPhotoPreview(coin.photo,  1); else removePhoto(1);
+    if (coin.photo2) setPhotoPreview(coin.photo2, 2); else removePhoto(2);
     openModal('formOverlay');
   }
 
@@ -942,11 +1042,13 @@
       const idx = coins.findIndex(c => c.id === editingId);
       if (idx !== -1) {
         coins[idx] = { ...coins[idx], name, location, date, pressedBy, notes,
-          photo: currentPhotoData ?? coins[idx].photo };
+          photo:  currentPhotoData,
+          photo2: currentPhotoData2 };
       }
     } else {
       coins.unshift({ id: uid(), name, location, date, pressedBy, notes,
-        photo: currentPhotoData || null, createdAt: Date.now() });
+        photo: currentPhotoData || null, photo2: currentPhotoData2 || null,
+        createdAt: Date.now() });
     }
 
     saveCoins(coins);
@@ -973,9 +1075,22 @@
     if (!coin) return;
     currentDetailId = id;
 
+    const hasTwo = !!(coin.photo && coin.photo2);
     document.getElementById('detailBody').innerHTML = `
-      <div class="detail-img-wrap">
-        ${coin.photo ? `<img src="${coin.photo}" alt="${escHtml(coin.name)}">` : '🪙'}
+      <div class="detail-photos ${hasTwo ? 'two-up' : 'one-up'}">
+        <div class="detail-photo-slot">
+          ${hasTwo ? '<div class="detail-photo-slot-label">Vorderseite</div>' : ''}
+          <div class="detail-img-wrap">
+            ${coin.photo ? `<img src="${coin.photo}" alt="${escHtml(coin.name)}">` : '🪙'}
+          </div>
+        </div>
+        ${hasTwo ? `
+        <div class="detail-photo-slot">
+          <div class="detail-photo-slot-label">Rückseite</div>
+          <div class="detail-img-wrap">
+            <img src="${coin.photo2}" alt="Rückseite ${escHtml(coin.name)}">
+          </div>
+        </div>` : ''}
       </div>
       <div class="detail-title">${escHtml(coin.name)}</div>
       <div class="detail-grid">
