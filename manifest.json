@@ -1,0 +1,17 @@
+{
+  "name": "Quetschmünzen Sammlung",
+  "short_name": "Quetschmünzen",
+  "description": "Katalog für Pressed Pennies – Fotos, Orte und Erinnerungen",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fdf6ec",
+  "theme_color": "#b5651d",
+  "orientation": "portrait-primary",
+  "lang": "de",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon.svg",     "sizes": "any",      "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
